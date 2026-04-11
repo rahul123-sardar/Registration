@@ -3,67 +3,56 @@ import userRoutes from "./routes/registration.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+
+// Load local .env only if not running in Docker
 dotenv.config();
 
-const app=express();
+const app = express();
 
-
+// Middleware
 app.use(cors({
-  origin: "http://localhost:5173", // or whatever port your frontend is on
+  origin: "http://localhost:5173",
   methods: ["GET", "POST"],
   credentials: true
 }));
 
-// app.use(express.urlencoded({ extended: true }));
-
-// app.use(express.json());
-
 app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 
-// app.use("/uploads", express.static("uploads")); // serve images
+// Routes
 app.use("/api", userRoutes);
+app.get("/", (req, res) => res.send("Backend is running!"));
 
-
-app.get("/", (req, res)=>{
-    res.send("I am root");
-});
-
-
- 
-// mongoose.connect(process.env.MONGO_URI)
-//   .then(() => {
-//     app.listen(5000, () => {
-//       console.log("Server running on port 5000");
-//     });
-//   })
-//   .catch(err => console.log(err));
-
-
+// Database Connection Logic
 const connectDB = async () => {
+  const uri = process.env.MONGODB_URI;
+
+  console.log("DEBUG: Attempting connection with MONGO_URI:", uri ? "Found (HIDDEN)" : "UNDEFINED");
+
+  if (!uri) {
+    console.error("❌ Error: MONGO_URI environment variable is missing!");
+    process.exit(1);
+  }
+
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ MongoDB Connected...");
+    await mongoose.connect(uri);
+    console.log("✅ MongoDB Connected Successfully");
+
+    // Start server ONLY after successful DB connection
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   } catch (err) {
-    console.error("❌ Connection Failed:", err.message);
-    process.exit(1); // Stop the server if DB fails
+    console.error("❌ MongoDB Connection Failed:", err.message);
+    process.exit(1);
   }
 };
 
 connectDB();
 
-  app.use((err, req, res, next) => {
-  console.error("🔥 GLOBAL ERROR:");
-  console.error(err);
-  console.error("🔥 MESSAGE:", err.message);
-  console.error("🔥 STACK:", err.stack);
-
-  res.status(500).json({
-    success: false,
-    message: err.message,
-  });
-});
-
-app.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("🔥 GLOBAL ERROR:", err.message);
+  res.status(500).json({ success: false, message: err.message });
 });
