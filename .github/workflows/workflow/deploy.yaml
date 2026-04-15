@@ -1,4 +1,4 @@
-name: Deploy Node.js Backend
+name: Deploy Backend to Azure
 
 on:
   push:
@@ -9,7 +9,6 @@ permissions:
   contents: read
 
 env:
-  # This tells GitHub to use the modern Node 24 runner for actions
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
 
 jobs:
@@ -28,17 +27,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Using Node 22 (LTS) or '24' for the latest
+          node-version: '22'
           cache: 'npm'
-          # If your package.json is NOT in the root, uncomment the line below:
-          # cache-dependency-path: backend/package-lock.json 
 
       - name: Install dependencies
-        # If your code is in a subfolder, add 'cd foldername &&' before npm install
         run: npm install
 
-      - name: 'Deploy to Azure App Service'
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'your-azure-app-name'
-          package: . # Change to 'backend' if your code is in a subfolder
+          app-name: 'YOUR_AZURE_APP_NAME_HERE' # <--- MAKE SURE THIS MATCHES AZURE
+          package: .
