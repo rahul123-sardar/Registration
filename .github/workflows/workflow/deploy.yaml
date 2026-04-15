@@ -5,10 +5,11 @@ on:
     branches: [ "main" ]
 
 permissions:
-  id-token: write
+  id-token: write  # CRITICAL for OIDC login
   contents: read
 
 env:
+  # This stops the Node.js 20 deprecation warning
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
 
 jobs:
@@ -23,12 +24,15 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # In 2026, adding this line explicitly helps if the auto-detect fails
+          auth-type: SERVICE_PRINCIPAL 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: '22' # Latest stable LTS
+          # Remove 'cache: npm' if you still get the "lock file not found" error
+          # cache: 'npm' 
 
       - name: Install dependencies
         run: npm install
@@ -36,5 +40,5 @@ jobs:
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'YOUR_AZURE_APP_NAME_HERE' # <--- MAKE SURE THIS MATCHES AZURE
+          app-name: 'YOUR_ACTUAL_APP_NAME' # Use the name from the Azure Portal
           package: .
